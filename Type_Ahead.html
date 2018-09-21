@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Type Ahead 👀</title>
+  <link rel="stylesheet" href="Type_Ahead.css">
+</head>
+<body>
+
+  <form class="search-form">
+    <input type="text" class="search" placeholder="City or State">
+    <ul class="suggestions">
+      <li>Filter for a city</li>
+      <li>or a state</li>
+    </ul>
+  </form>
+<script>
+const endpoint = 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+
+
+/*using API in the browser called "fetch". Returns a promise. But it doesnt know what type of data is this is(json), thats why we called it blob initially.  You have to explicity tell the computer it's json data.*/
+const cities = [];
+
+//fetch(endpoint) below doesnt return data, it returns a promise. To work with a promise you call .then against it.
+//fetch(endpoint).then(blob => console.log(blob))
+//returns  a promise, we'll call it blob cuz its a bunch of data. We need to specify that it's JSON data below.
+//we neeed to modify the fetch to the below:
+fetch(endpoint)
+    .then(blob => blob.json())
+    //how get the data into cities? Need to use es6 spread to stop defulat of nesting arrays after arguments using .push()
+    .then(data => cities.push(...data))
+
+    //when someone types into the search box, need a way to filter thru massive array list. hence function below:
+    function findMatches(wordtoMatch, cities) {
+      return cities.filter(place => {
+        //we need to figure out if city/state matches what was searched
+        //added "regex" variable with "gi" for global and insensitive casing
+        let regex = new RegExp(wordtoMatch, 'gi')
+        //we're looking to match city or state, so if either is true, then return it via the filter.
+        return place.city.match(regex) || place.state.match(regex)
+      })
+    }
+
+    //create a display function, called whenever someone changes the value.
+function displayMatches() {
+  //now with below added, whenever you type into the input, it should run this, call the function etc...
+  //this gets the data first. Now, we write the below.
+ let matchArray = findMatches(this.value, cities)
+  //console.log(matchArray)
+  let html = matchArray.map(place => {
+    //want to get the words hilighted and numbers formatted. replace the word with "hl". Create a regex to match city name, then use that word to replace with "hl"
+    let regex = new RegExp(this.value, "gi");
+    let cityName = place.city.replace(regex,  `<span class = "hl">${this.value}</span>`);
+    //now, we do it for state name. duplicate the above.
+    let stateName = place.state.replace(regex,  `<span class = "hl">${this.value}</span>`);
+   return `
+      <li>
+        <span class = "name">${cityName}, ${stateName}</span>
+        <span class = "population">${place.population}</span>
+      </li>
+         `;
+         //the above will return an array. We want a string so we add the ".join" below.
+      }).join("")
+      suggestions.innerHTML = html;
+    }
+
+    //class for the search input box is "search"
+    let searchInput = document.querySelector(".search")
+    let suggestions = document.querySelector(".suggestions")
+    //listen for the "change" event, and when the input changes, run the findMatches function.
+    searchInput.addEventListener("change", displayMatches)
+
+
+</script>
+  </body>
+</html>
